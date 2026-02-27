@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumen · Asistente de Estudio IA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero">
+        <p class="tag">✨ Lumen AI Study Coach</p>
+        <h1>Lumen</h1>
+        <p class="subtitle">Aprende cualquier tema con explicaciones claras, quiz instantáneo y feedback inteligente.</p>
+      </section>
+
+      <section class="card">
+        <h2>1) Configura tu sesión</h2>
+        <div class="grid">
+          <label>
+            Tema
+            <input id="topic" placeholder="Ej. cálculo diferencial" />
+          </label>
+          <label>
+            Nivel
+            <select id="level">
+              <option value="principiante">Principiante</option>
+              <option value="intermedio">Intermedio</option>
+              <option value="avanzado">Avanzado</option>
+            </select>
+          </label>
+        </div>
+        <button id="startBtn">Generar contenido</button>
+        <p id="status" class="status"></p>
+      </section>
+
+      <section class="card">
+        <h2>Demo rápida (3 temas)</h2>
+        <p class="demo-help">Usa estos ejemplos para mostrar Lumen en tu presentación.</p>
+        <div class="demo-grid">
+          <button class="demo-btn" data-topic="Cálculo diferencial" data-level="principiante">
+            📘 Cálculo diferencial
+          </button>
+          <button class="demo-btn" data-topic="Fotosíntesis" data-level="intermedio">
+            🌿 Fotosíntesis
+          </button>
+          <button class="demo-btn" data-topic="Revolución francesa" data-level="avanzado">
+            🏛️ Revolución francesa
+          </button>
+        </div>
+      </section>
+
+      <section class="card hidden" id="summarySection">
+        <h2>2) Resumen</h2>
+        <p id="summary"></p>
+      </section>
+
+      <section class="card hidden" id="planSection">
+        <h2>3) Plan rápido de estudio</h2>
+        <pre id="plan"></pre>
+      </section>
+
+      <section class="card hidden" id="quizSection">
+        <h2>4) Quiz interactivo</h2>
+        <div id="quiz"></div>
+      </section>
+    </main>
+
+    <script src="/runtime-config.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+  </html>
