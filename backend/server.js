@@ -102,6 +102,52 @@ function getTopicKeywords(topic) {
     .slice(0, 6);
 }
 
+const GENERIC_QUIZ_PATTERNS = [
+  "objetivo al estudiar",
+  "metodo mejora mas el progreso",
+  "que hacer cuando fallas",
+  "senal de aprendizaje real",
+  "habito sostiene el avance",
+  "memorizar sin comprender",
+  "estudiar solo cuando hay examen",
+  "evitar preguntas dificiles",
+];
+
+const PRACTICAL_CUES = [
+  "calcula",
+  "resuelve",
+  "determina",
+  "analiza",
+  "aplica",
+  "interpreta",
+  "resultado",
+  "escenario",
+  "si x",
+  "si la",
+  "dado",
+  "considera",
+];
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isQuantitativeTopic(topic) {
+  const text = normalizeText(topic);
+  return [
+    "calculo",
+    "algebra",
+    "matemat",
+    "estadistica",
+    "fisica",
+    "quimica",
+    "economia",
+  ].some((token) => text.includes(token));
+}
+
 function isQuizTopical(quiz, topic) {
   if (!quiz || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
     return false;
@@ -123,68 +169,187 @@ function isQuizTopical(quiz, topic) {
   return relevantCount >= 4;
 }
 
+function hasGenericQuestionStyle(quiz) {
+  const fullText = normalizeText(
+    (quiz?.questions || [])
+      .map((item) => `${item.question || ""} ${(item.options || []).join(" ")} ${item.explanation || ""}`)
+      .join(" ")
+  );
+
+  return GENERIC_QUIZ_PATTERNS.some((pattern) => fullText.includes(pattern));
+}
+
+function hasPracticalFocus(quiz, topic) {
+  const questions = quiz?.questions || [];
+  if (questions.length === 0) {
+    return false;
+  }
+
+  let practicalCount = 0;
+  for (const item of questions) {
+    const text = normalizeText(`${item.question || ""} ${(item.options || []).join(" ")}`);
+    const hasCue = PRACTICAL_CUES.some((cue) => text.includes(cue));
+    const hasNumericSignal = /\d|=|\+|\-|\*|\//.test(text);
+    if (hasCue || hasNumericSignal) {
+      practicalCount += 1;
+    }
+  }
+
+  return isQuantitativeTopic(topic) ? practicalCount >= 4 : practicalCount >= 3;
+}
+
+function isQuizAcceptable(quiz, topic) {
+  return isQuizTopical(quiz, topic) && !hasGenericQuestionStyle(quiz) && hasPracticalFocus(quiz, topic);
+}
+
 function buildFallbackQuiz(topic, level) {
+  const topicText = normalizeText(topic);
+
+  if (topicText.includes("calculo")) {
+    return {
+      questions: [
+        {
+          id: "q1",
+          question: "Calcula la derivada de f(x)=x^3+2x.",
+          options: ["3x^2+2", "x^2+2", "3x+2", "x^3+2"],
+          correctIndex: 0,
+          explanation: "Regla de potencia: (x^3)'=3x^2 y (2x)'=2.",
+        },
+        {
+          id: "q2",
+          question: "Si f(x)=x^2, ¿cuál es la pendiente de la tangente en x=3?",
+          options: ["3", "6", "9", "12"],
+          correctIndex: 1,
+          explanation: "f'(x)=2x, luego f'(3)=6.",
+        },
+        {
+          id: "q3",
+          question: "Resuelve: lim_{h→0} ((x+h)^2-x^2)/h",
+          options: ["x", "2x", "x^2", "2"],
+          correctIndex: 1,
+          explanation: "Al simplificar queda 2x+h; al tomar el límite da 2x.",
+        },
+        {
+          id: "q4",
+          question: "¿Qué regla aplicas para derivar y=(x^2+1)(x-3)?",
+          options: ["Regla de la cadena", "Regla del producto", "Regla del cociente", "Regla de la potencia"],
+          correctIndex: 1,
+          explanation: "Es producto de dos funciones; aplica la regla del producto.",
+        },
+        {
+          id: "q5",
+          question: "Si la posición es s(t)=t^2+4t, ¿cuál es la velocidad instantánea en t=2?",
+          options: ["4", "6", "8", "10"],
+          correctIndex: 2,
+          explanation: "v(t)=s'(t)=2t+4; v(2)=8.",
+        },
+      ],
+    };
+  }
+
+  if (topicText.includes("economia")) {
+    return {
+      questions: [
+        {
+          id: "q1",
+          question: "Si el precio sube de 10 a 12 y la demanda baja de 100 a 90, ¿qué ocurre con la demanda?",
+          options: ["Aumenta", "Disminuye", "No cambia", "Se vuelve infinita"],
+          correctIndex: 1,
+          explanation: "Con mayor precio, la demanda tiende a disminuir (ceteris paribus).",
+        },
+        {
+          id: "q2",
+          question: "Calcula la inflación si una canasta pasa de 200 a 214.",
+          options: ["5%", "6%", "7%", "8%"],
+          correctIndex: 2,
+          explanation: "(214-200)/200 = 0.07, es decir 7%.",
+        },
+        {
+          id: "q3",
+          question: "Si el costo fijo es 100 y el costo variable por unidad es 5, ¿costo total para 20 unidades?",
+          options: ["180", "200", "220", "250"],
+          correctIndex: 1,
+          explanation: "CT = CF + CV = 100 + (5×20) = 200.",
+        },
+        {
+          id: "q4",
+          question: "Si ingreso total es 500 y costo total 380, ¿cuál es la utilidad?",
+          options: ["80", "100", "120", "140"],
+          correctIndex: 2,
+          explanation: "Utilidad = Ingreso total - Costo total = 120.",
+        },
+        {
+          id: "q5",
+          question: "En un mercado competitivo, si la oferta supera la demanda, ¿qué presión hay sobre el precio?",
+          options: ["Sube", "Baja", "Se mantiene fijo", "Se duplica"],
+          correctIndex: 1,
+          explanation: "Exceso de oferta genera presión a la baja en precios.",
+        },
+      ],
+    };
+  }
+
   return {
     questions: [
       {
         id: "q1",
-        question: `¿Qué describe mejor el objetivo al estudiar ${topic}?`,
+        question: `¿Cuál opción aplica correctamente un concepto central de ${topic}?`,
         options: [
-          "Memorizar sin comprender",
-          "Comprender y aplicar conceptos",
-          "Evitar ejercicios",
-          "Solo leer teoría",
+          `Aplicar ${topic} a un caso práctico`,
+          "Memorizar definiciones sin contexto",
+          "Evitar resolver casos",
+          "Ignorar resultados",
         ],
-        correctIndex: 1,
-        explanation: "El aprendizaje efectivo combina comprensión y aplicación.",
+        correctIndex: 0,
+        explanation: `La opción correcta usa ${topic} en una situación aplicada.`,
       },
       {
         id: "q2",
-        question: `Para nivel ${level}, ¿qué método mejora más el progreso?`,
+        question: `Si debes resolver un problema de ${topic}, ¿qué paso es más adecuado al inicio?`,
         options: [
-          "Practicar con retroalimentación",
-          "No revisar errores",
-          "Estudiar una vez por semana",
-          "Saltar fundamentos",
+          "Identificar datos y objetivo del problema",
+          "Elegir respuesta al azar",
+          "Evitar el enunciado",
+          "Copiar sin analizar",
         ],
         correctIndex: 0,
-        explanation: "La práctica con feedback acelera el dominio del tema.",
+        explanation: "Primero debes entender datos, variables y objetivo del ejercicio.",
       },
       {
         id: "q3",
-        question: "¿Qué hacer cuando fallas una respuesta?",
+        question: `¿Qué acción demuestra aplicación práctica en ${topic}?`,
         options: [
-          "Ignorar el error",
-          "Analizar la explicación y reintentar",
-          "Cambiar de tema inmediatamente",
-          "Memorizar sin contexto",
+          "Resolver un ejercicio nuevo y justificar el resultado",
+          "Leer solo el título",
+          "Omitir cálculos o análisis",
+          "No verificar unidades ni supuestos",
         ],
-        correctIndex: 1,
-        explanation: "Entender el error fortalece la retención y la precisión.",
+        correctIndex: 0,
+        explanation: "Aplicar y justificar en casos nuevos demuestra dominio real.",
       },
       {
         id: "q4",
-        question: "¿Cuál es una señal de aprendizaje real?",
+        question: `Al comparar dos soluciones de ${topic}, ¿qué criterio técnico debes priorizar?`,
         options: [
-          "Más tiempo sin resultados",
-          "Mayor exactitud en respuestas",
-          "Leer sin practicar",
-          "Evitar evaluación",
+          "Consistencia lógica y resultado correcto",
+          "Respuesta más corta sin fundamento",
+          "Formato visual sin contenido",
+          "Intuición sin evidencia",
         ],
-        correctIndex: 1,
-        explanation: "Mejorar precisión y consistencia muestra progreso real.",
+        correctIndex: 0,
+        explanation: "La solución correcta debe ser coherente y técnicamente sustentada.",
       },
       {
         id: "q5",
-        question: `¿Qué hábito sostiene el avance en ${topic}?`,
+        question: `¿Qué resultado indica que resolviste bien un ejercicio de ${topic}?`,
         options: [
-          "Repaso activo y constante",
-          "Estudiar solo cuando hay examen",
-          "Evitar preguntas difíciles",
-          "No tomar notas",
+          "Puedes explicar el procedimiento y verificar el resultado",
+          "Solo coincidir por azar",
+          "No poder justificar pasos",
+          "Cambiar datos para ajustar la respuesta",
         ],
         correctIndex: 0,
-        explanation: "La constancia con repaso activo consolida el conocimiento.",
+        explanation: "Si justificas y verificas, la resolución es confiable.",
       },
     ],
   };
@@ -230,14 +395,15 @@ async function parseQuizWithRepair(quizText, topic, level) {
   try {
     const parsed = JSON.parse(firstCandidate);
     const normalized = normalizeQuizShape(parsed, topic, level);
-    if (isQuizTopical(normalized, topic)) {
+    if (isQuizAcceptable(normalized, topic)) {
       return normalized;
     }
 
     const topicalPrompt = `Regenera el siguiente quiz para que sea ESPECÍFICAMENTE sobre "${topic}" (nivel "${level}").
 Condiciones obligatorias:
 - 5 preguntas, 4 opciones cada una
-- Cada pregunta debe mencionar explícitamente conceptos de ${topic}
+- Cada pregunta debe evaluar aplicación práctica o resolución de problemas de ${topic}
+- Prohibido usar preguntas genéricas de hábitos de estudio o metacognición
 - Incluye correctIndex (0..3) y explanation
 - Devuelve SOLO JSON válido con esquema {"questions":[...]}
 
@@ -248,7 +414,10 @@ ${JSON.stringify(normalized)}`;
       requireJson: true,
     });
     const topicalParsed = JSON.parse(extractJsonString(topicalText));
-    return normalizeQuizShape(topicalParsed, topic, level);
+    const topicalNormalized = normalizeQuizShape(topicalParsed, topic, level);
+    return isQuizAcceptable(topicalNormalized, topic)
+      ? topicalNormalized
+      : buildFallbackQuiz(topic, level);
   } catch (firstError) {
     const repairPrompt = `Corrige el siguiente contenido para que sea JSON válido y cumpla exactamente este esquema: {"questions":[{"id":"string","question":"string","options":["a","b","c","d"],"correctIndex":0,"explanation":"string"}]}. Deben ser 5 preguntas. Devuelve SOLO JSON válido.\n\nContenido:\n${firstCandidate}`;
     try {
@@ -256,7 +425,10 @@ ${JSON.stringify(normalized)}`;
         requireJson: true,
       });
       const repaired = JSON.parse(extractJsonString(repairedText));
-      return normalizeQuizShape(repaired, topic, level);
+      const repairedNormalized = normalizeQuizShape(repaired, topic, level);
+      return isQuizAcceptable(repairedNormalized, topic)
+        ? repairedNormalized
+        : buildFallbackQuiz(topic, level);
     } catch (repairError) {
       console.warn("Quiz JSON inválido, usando fallback local:", firstError.message, repairError.message);
       return buildFallbackQuiz(topic, level);
@@ -570,7 +742,8 @@ app.post("/api/quiz", async (req, res) => {
 
     const prompt = `Crea un quiz en español sobre "${topic}" para nivel "${level}".
 Devuelve exactamente 5 preguntas de opción múltiple con 4 opciones cada una.
-  Cada pregunta debe tratar un concepto real del tema "${topic}" y evitar preguntas genéricas de estudio.
+  Cada pregunta debe tratar un concepto real del tema "${topic}" y evaluar uso práctico (resolver, calcular, analizar o aplicar).
+  No hagas preguntas de hábitos de estudio, motivación o metacognición.
   Incluye vocabulario técnico del tema dentro de la pregunta o explicación.
 La opción correcta debe estar indicada en correctIndex (0 a 3).
 Incluye una explicación breve por pregunta en explanation.`;
