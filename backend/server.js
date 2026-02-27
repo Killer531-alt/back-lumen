@@ -289,6 +289,216 @@ function buildFallbackQuiz(topic, level) {
     };
   }
 
+  if (topicText.includes("algebra lineal")) {
+    return {
+      questions: [
+        {
+          id: "q1",
+          question: "Si A=[[1,2],[3,4]] y x=[1,1], ¿cuál es Ax?",
+          options: ["[3,7]", "[4,6]", "[1,1]", "[2,8]"],
+          correctIndex: 0,
+          explanation: "Multiplicación matriz-vector: Ax=[1*1+2*1,3*1+4*1]=[3,7].",
+        },
+        {
+          id: "q2",
+          question: "¿Cuándo una matriz cuadrada A es invertible?",
+          options: ["det(A)=0", "det(A)≠0", "tr(A)=0", "A tiene un cero"],
+          correctIndex: 1,
+          explanation: "Una matriz es invertible si y solo si su determinante es distinto de cero.",
+        },
+        {
+          id: "q3",
+          question: "Para A de 2x2 con det(A)=5, ¿cuál es det(A^{-1})?",
+          options: ["5", "1", "1/5", "-5"],
+          correctIndex: 2,
+          explanation: "det(A^{-1})=1/det(A)=1/5.",
+        },
+        {
+          id: "q4",
+          question: "Si un sistema Ax=b tiene pivote en cada columna de A, entonces:",
+          options: ["Tiene infinitas soluciones siempre", "Tiene solución única para todo b", "No tiene solución", "Depende solo de b"],
+          correctIndex: 1,
+          explanation: "Pivote en cada columna implica columnas linealmente independientes y unicidad.",
+        },
+        {
+          id: "q5",
+          question: "¿Qué indica que dos vectores en R^2 sean linealmente dependientes?",
+          options: ["Forman base de R^2", "Uno es múltiplo escalar del otro", "Su producto punto es cero", "Tienen igual norma"],
+          correctIndex: 1,
+          explanation: "Dependencia lineal en R^2 ocurre cuando un vector es múltiplo del otro.",
+        },
+      ],
+    };
+  }
+
+  if (topicText.includes("machine learning") || topicText.includes("redes neuronales") || topicText.includes("deep learning")) {
+    return {
+      questions: [
+        {
+          id: "q1",
+          question: "En clasificación binaria, ¿qué activación suele usarse en la capa de salida?",
+          options: ["ReLU", "tanh", "sigmoid", "softplus"],
+          correctIndex: 2,
+          explanation: "Sigmoid mapea la salida a probabilidad entre 0 y 1.",
+        },
+        {
+          id: "q2",
+          question: "Si el modelo tiene alta precisión en entrenamiento y baja en validación, ¿qué problema sugiere?",
+          options: ["Underfitting", "Overfitting", "Convergencia perfecta", "Data leakage inverso"],
+          correctIndex: 1,
+          explanation: "Es patrón típico de sobreajuste: memoriza train, generaliza mal.",
+        },
+        {
+          id: "q3",
+          question: "¿Qué técnica reduce overfitting en redes profundas durante entrenamiento?",
+          options: ["Aumentar épocas sin límite", "Dropout", "Eliminar validación", "Subir batch size a máximo"],
+          correctIndex: 1,
+          explanation: "Dropout apaga neuronas aleatoriamente y mejora generalización.",
+        },
+        {
+          id: "q4",
+          question: "Para clases desbalanceadas, ¿qué métrica suele ser más informativa que accuracy?",
+          options: ["MSE", "F1-score", "MAE", "R^2"],
+          correctIndex: 1,
+          explanation: "F1 combina precisión y recall, útil con desbalance de clases.",
+        },
+        {
+          id: "q5",
+          question: "En backpropagation, ¿qué se propaga hacia atrás por la red?",
+          options: ["Solo pesos finales", "Gradientes del error", "Etiquetas originales", "Nuevos datos"],
+          correctIndex: 1,
+          explanation: "Se propagan gradientes para actualizar pesos con descenso de gradiente.",
+        },
+      ],
+    };
+  }
+
+  if (topicText.includes("quimica organica")) {
+    return {
+      questions: [
+        {
+          id: "q1",
+          question: "¿Cuál grupo funcional caracteriza a un alcohol?",
+          options: ["-CHO", "-OH", "-COOH", "-NH2"],
+          correctIndex: 1,
+          explanation: "El grupo hidroxilo (-OH) define a los alcoholes.",
+        },
+        {
+          id: "q2",
+          question: "La adición de HBr a eteno produce principalmente:",
+          options: ["Etano", "Bromoetano", "Etenol", "Etino"],
+          correctIndex: 1,
+          explanation: "El doble enlace se rompe y se adicionan H y Br, formando bromoetano.",
+        },
+        {
+          id: "q3",
+          question: "¿Qué tipo de reacción convierte un alcohol primario en aldehído?",
+          options: ["Hidrogenación", "Oxidación suave", "Halogenación", "Reducción"],
+          correctIndex: 1,
+          explanation: "Una oxidación controlada de alcohol primario da aldehído.",
+        },
+        {
+          id: "q4",
+          question: "¿Cuál es el producto principal de una esterificación entre ácido carboxílico y alcohol?",
+          options: ["Éster y agua", "Amina y agua", "Alcano y CO2", "Cetona y hidrógeno"],
+          correctIndex: 0,
+          explanation: "La esterificación de Fischer genera éster + agua.",
+        },
+        {
+          id: "q5",
+          question: "En una sustitución nucleofílica SN1, ¿qué intermedio clave se forma?",
+          options: ["Carbanión", "Carbocatión", "Radical libre", "Complejo metálico"],
+          correctIndex: 1,
+          explanation: "SN1 procede vía carbocatión intermedio.",
+        },
+      ],
+    };
+  }
+
+  if (topicText.includes("ecuaciones diferenciales")) {
+    return {
+      questions: [
+        {
+          id: "q1",
+          question: "Resuelve y' = 3y con y(0)=2. ¿Cuál es y(t)?",
+          options: ["2e^{3t}", "3e^{2t}", "2+3t", "e^{6t}"],
+          correctIndex: 0,
+          explanation: "Ecuación separable: y=Ce^{3t}; con y(0)=2 resulta y=2e^{3t}.",
+        },
+        {
+          id: "q2",
+          question: "¿Qué método aplica directo a y'+p(t)y=q(t)?",
+          options: ["Transformada z", "Factor integrante", "Series de Fourier", "Regla de L'Hôpital"],
+          correctIndex: 1,
+          explanation: "Las ecuaciones lineales de primer orden se resuelven con factor integrante.",
+        },
+        {
+          id: "q3",
+          question: "Para y''+4y=0, la solución general real es:",
+          options: ["C1e^{2t}+C2e^{-2t}", "C1cos(2t)+C2sin(2t)", "C1e^{4t}+C2", "C1t+C2"],
+          correctIndex: 1,
+          explanation: "Ecuación característica r^2+4=0 => r=±2i, solución trigonométrica.",
+        },
+        {
+          id: "q4",
+          question: "Si una EDO es separable, ¿qué forma tiene?",
+          options: ["y'=f(t)+g(y)", "y'=f(t)g(y)", "y''=f(y)", "y'+y''=0"],
+          correctIndex: 1,
+          explanation: "Separables permiten escribir dy/g(y)=f(t)dt.",
+        },
+        {
+          id: "q5",
+          question: "En un modelo de decaimiento y'=-ky (k>0), ¿qué describe k?",
+          options: ["Frecuencia angular", "Tasa de decaimiento", "Condición inicial", "Periodo"],
+          correctIndex: 1,
+          explanation: "k controla qué tan rápido disminuye y(t).",
+        },
+      ],
+    };
+  }
+
+  if (topicText.includes("criptografia") || topicText.includes("asimetrica")) {
+    return {
+      questions: [
+        {
+          id: "q1",
+          question: "En RSA, ¿qué clave se usa para cifrar un mensaje destinado a Bob?",
+          options: ["Privada de Alice", "Pública de Bob", "Privada de Bob", "Pública de Alice"],
+          correctIndex: 1,
+          explanation: "Para confidencialidad, se cifra con la clave pública del receptor.",
+        },
+        {
+          id: "q2",
+          question: "¿Qué propiedad principal ofrece una firma digital válida?",
+          options: ["Compresión", "Autenticidad e integridad", "Anonimato total", "Aumento de ancho de banda"],
+          correctIndex: 1,
+          explanation: "La firma digital prueba origen y detecta alteraciones del mensaje.",
+        },
+        {
+          id: "q3",
+          question: "Si un atacante puede factorizar n=p·q grande en RSA, compromete principalmente:",
+          options: ["Solo hashes", "Clave privada", "Clave pública", "Canal TLS completo"],
+          correctIndex: 1,
+          explanation: "Factorizar n permite calcular φ(n) y reconstruir la clave privada.",
+        },
+        {
+          id: "q4",
+          question: "¿Para qué se usa típicamente Diffie-Hellman?",
+          options: ["Hashing de contraseñas", "Intercambio de claves", "Cifrado de bloque", "Firma de PDF"],
+          correctIndex: 1,
+          explanation: "Diffie-Hellman permite acordar una clave compartida en canal inseguro.",
+        },
+        {
+          id: "q5",
+          question: "¿Qué práctica fortalece la seguridad en criptografía asimétrica aplicada?",
+          options: ["Reutilizar claves por años", "Rotación y tamaños de clave adecuados", "Publicar clave privada", "Evitar padding"],
+          correctIndex: 1,
+          explanation: "Rotar claves y usar tamaños seguros reduce riesgo criptográfico.",
+        },
+      ],
+    };
+  }
+
   return {
     questions: [
       {
