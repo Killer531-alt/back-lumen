@@ -91,6 +91,38 @@ function extractJsonString(text) {
   return cleaned;
 }
 
+function getTopicKeywords(topic) {
+  return String(topic || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 3)
+    .slice(0, 6);
+}
+
+function isQuizTopical(quiz, topic) {
+  if (!quiz || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+    return false;
+  }
+
+  const topicLower = String(topic || "").toLowerCase();
+  const keywords = getTopicKeywords(topic);
+
+  let relevantCount = 0;
+  for (const item of quiz.questions) {
+    const text = `${item.question || ""} ${(item.options || []).join(" ")} ${item.explanation || ""}`.toLowerCase();
+    const hasTopic = topicLower && text.includes(topicLower);
+    const hasKeyword = keywords.some((key) => text.includes(key));
+    if (hasTopic || hasKeyword) {
+      relevantCount += 1;
+    }
+  }
+
+  return relevantCount >= 4;
+}
+
 function buildFallbackQuiz(topic, level) {
   return {
     questions: [
@@ -197,7 +229,26 @@ async function parseQuizWithRepair(quizText, topic, level) {
   const firstCandidate = extractJsonString(quizText);
   try {
     const parsed = JSON.parse(firstCandidate);
-    return normalizeQuizShape(parsed, topic, level);
+    const normalized = normalizeQuizShape(parsed, topic, level);
+    if (isQuizTopical(normalized, topic)) {
+      return normalized;
+    }
+
+    const topicalPrompt = `Regenera el siguiente quiz para que sea ESPECÍFICAMENTE sobre "${topic}" (nivel "${level}").
+Condiciones obligatorias:
+- 5 preguntas, 4 opciones cada una
+- Cada pregunta debe mencionar explícitamente conceptos de ${topic}
+- Incluye correctIndex (0..3) y explanation
+- Devuelve SOLO JSON válido con esquema {"questions":[...]}
+
+Quiz actual:
+${JSON.stringify(normalized)}`;
+
+    const { text: topicalText } = await generateWithFallback(topicalPrompt, {
+      requireJson: true,
+    });
+    const topicalParsed = JSON.parse(extractJsonString(topicalText));
+    return normalizeQuizShape(topicalParsed, topic, level);
   } catch (firstError) {
     const repairPrompt = `Corrige el siguiente contenido para que sea JSON válido y cumpla exactamente este esquema: {"questions":[{"id":"string","question":"string","options":["a","b","c","d"],"correctIndex":0,"explanation":"string"}]}. Deben ser 5 preguntas. Devuelve SOLO JSON válido.\n\nContenido:\n${firstCandidate}`;
     try {
@@ -519,6 +570,8 @@ app.post("/api/quiz", async (req, res) => {
 
     const prompt = `Crea un quiz en español sobre "${topic}" para nivel "${level}".
 Devuelve exactamente 5 preguntas de opción múltiple con 4 opciones cada una.
+  Cada pregunta debe tratar un concepto real del tema "${topic}" y evitar preguntas genéricas de estudio.
+  Incluye vocabulario técnico del tema dentro de la pregunta o explicación.
 La opción correcta debe estar indicada en correctIndex (0 a 3).
 Incluye una explicación breve por pregunta en explanation.`;
 
