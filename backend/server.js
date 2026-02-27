@@ -91,6 +91,128 @@ function extractJsonString(text) {
   return cleaned;
 }
 
+function buildFallbackQuiz(topic, level) {
+  return {
+    questions: [
+      {
+        id: "q1",
+        question: `¿Qué describe mejor el objetivo al estudiar ${topic}?`,
+        options: [
+          "Memorizar sin comprender",
+          "Comprender y aplicar conceptos",
+          "Evitar ejercicios",
+          "Solo leer teoría",
+        ],
+        correctIndex: 1,
+        explanation: "El aprendizaje efectivo combina comprensión y aplicación.",
+      },
+      {
+        id: "q2",
+        question: `Para nivel ${level}, ¿qué método mejora más el progreso?`,
+        options: [
+          "Practicar con retroalimentación",
+          "No revisar errores",
+          "Estudiar una vez por semana",
+          "Saltar fundamentos",
+        ],
+        correctIndex: 0,
+        explanation: "La práctica con feedback acelera el dominio del tema.",
+      },
+      {
+        id: "q3",
+        question: "¿Qué hacer cuando fallas una respuesta?",
+        options: [
+          "Ignorar el error",
+          "Analizar la explicación y reintentar",
+          "Cambiar de tema inmediatamente",
+          "Memorizar sin contexto",
+        ],
+        correctIndex: 1,
+        explanation: "Entender el error fortalece la retención y la precisión.",
+      },
+      {
+        id: "q4",
+        question: "¿Cuál es una señal de aprendizaje real?",
+        options: [
+          "Más tiempo sin resultados",
+          "Mayor exactitud en respuestas",
+          "Leer sin practicar",
+          "Evitar evaluación",
+        ],
+        correctIndex: 1,
+        explanation: "Mejorar precisión y consistencia muestra progreso real.",
+      },
+      {
+        id: "q5",
+        question: `¿Qué hábito sostiene el avance en ${topic}?`,
+        options: [
+          "Repaso activo y constante",
+          "Estudiar solo cuando hay examen",
+          "Evitar preguntas difíciles",
+          "No tomar notas",
+        ],
+        correctIndex: 0,
+        explanation: "La constancia con repaso activo consolida el conocimiento.",
+      },
+    ],
+  };
+}
+
+function normalizeQuizShape(rawQuiz, topic, level) {
+  if (!rawQuiz || !Array.isArray(rawQuiz.questions)) {
+    return buildFallbackQuiz(topic, level);
+  }
+
+  const normalized = rawQuiz.questions
+    .map((item, index) => {
+      const options = Array.isArray(item.options) ? item.options.filter(Boolean).slice(0, 4) : [];
+      if (options.length < 4) {
+        return null;
+      }
+
+      let correctIndex = Number(item.correctIndex);
+      if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
+        correctIndex = 0;
+      }
+
+      return {
+        id: String(item.id || `q${index + 1}`),
+        question: String(item.question || "Pregunta"),
+        options,
+        correctIndex,
+        explanation: String(item.explanation || "Revisa este concepto para reforzar la respuesta."),
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 5);
+
+  if (normalized.length < 5) {
+    return buildFallbackQuiz(topic, level);
+  }
+
+  return { questions: normalized };
+}
+
+async function parseQuizWithRepair(quizText, topic, level) {
+  const firstCandidate = extractJsonString(quizText);
+  try {
+    const parsed = JSON.parse(firstCandidate);
+    return normalizeQuizShape(parsed, topic, level);
+  } catch (firstError) {
+    const repairPrompt = `Corrige el siguiente contenido para que sea JSON válido y cumpla exactamente este esquema: {"questions":[{"id":"string","question":"string","options":["a","b","c","d"],"correctIndex":0,"explanation":"string"}]}. Deben ser 5 preguntas. Devuelve SOLO JSON válido.\n\nContenido:\n${firstCandidate}`;
+    try {
+      const { text: repairedText } = await generateWithFallback(repairPrompt, {
+        requireJson: true,
+      });
+      const repaired = JSON.parse(extractJsonString(repairedText));
+      return normalizeQuizShape(repaired, topic, level);
+    } catch (repairError) {
+      console.warn("Quiz JSON inválido, usando fallback local:", firstError.message, repairError.message);
+      return buildFallbackQuiz(topic, level);
+    }
+  }
+}
+
 async function callOllama(prompt, requireJson = false) {
   const headers = { "Content-Type": "application/json" };
   if (OLLAMA_API_KEY) {
@@ -404,7 +526,7 @@ Incluye una explicación breve por pregunta en explanation.`;
       responseSchema: quizSchema,
       requireJson: true,
     });
-    const quiz = JSON.parse(extractJsonString(quizText));
+    const quiz = await parseQuizWithRepair(quizText, topic, level);
     res.json(quiz);
   } catch (error) {
     res.status(500).json({ error: error.message || "Error interno" });
